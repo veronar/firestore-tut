@@ -28,12 +28,17 @@ function renderCafe(doc){
 	})
 }
 
-// getting data
-db.collection('cafes').get().then((snapshot) => {
-	snapshot.docs.forEach(doc => {
-		renderCafe(doc);
-	})
-});
+
+// getting data - no real-time listener to db changes
+// db.collection('cafes')
+// .where('city', '==', 'manchester')
+// .orderBy('name')
+// .get()
+// .then((snapshot) => {
+// 	snapshot.docs.forEach(doc => {
+// 		renderCafe(doc);
+// 	})
+// });
 
 // saving data
 form.addEventListener('submit', (event) => {
@@ -45,3 +50,31 @@ form.addEventListener('submit', (event) => {
 	form.name.value = '';
 	form.city.value = '';
 });
+
+// getting data with realtime listener to db changes
+db.collection('cafes').orderBy('city').onSnapshot(snapshot => {
+	let changes = snapshot.docChanges();
+	changes.forEach(change => {
+		if (change.type == 'added') {
+			renderCafe(change.doc);
+		}
+		else if (change.type == 'removed') {
+			let li = cafeList.querySelector('[data-id=' + change.doc.id + ']');
+			cafeList.removeChild(li);
+		}
+	});
+});
+
+
+//updating data
+// let id = event.target.parentElement.getAttribute('data-id');
+db.collection('cafes').doc(id).update({
+	name: 'Wario World',
+	city: 'new york'
+});
+
+// set completely overrides
+// changes id, if field isnt populate - makes it null / non-existent
+db.collection('cafes').doc(id).set({
+	city: 'liverpool'
+})
